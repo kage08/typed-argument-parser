@@ -162,7 +162,7 @@ class Tap(ArgumentParser):
             # Required/default
             if kwargs.get('required', False) or is_positional_arg(*name_or_flags):
                 kwargs['help'] += 'required'
-            else:
+            elif not isinstance(kwargs.get('default'), Tap):
                 kwargs['help'] += f'default={kwargs.get("default", None)}'
 
             kwargs['help'] += ')'
@@ -443,10 +443,14 @@ class Tap(ArgumentParser):
 
         # Parse args using super class ArgumentParser's parse_args or parse_known_args function
         if known_only:
+            for k,v in self._annotations.items():
+                if issubclass(v, Tap):
+                    setattr(self, k, v().parse_args(known_only=known_only, legacy_config_parsing=legacy_config_parsing))
+
             default_namespace, self.extra_args = super(Tap, self).parse_known_args(args)
         else:
             default_namespace = super(Tap, self).parse_args(args)
-
+        import pdb; pdb.set_trace()
         # Copy parsed arguments to self
         for variable, value in vars(default_namespace).items():
             # Conversion from list to set or tuple
@@ -711,7 +715,10 @@ class Tap(ArgumentParser):
 
         :return: A formatted string representation of the dictionary of all arguments.
         """
-        return pformat(self.as_dict())
+        if self._parsed:
+            return pformat(self.as_dict())
+        else:
+            return '<Tap object not yet parsed>'
 
     @fix_py36_copy
     def __deepcopy__(self, memo: Dict[int, Any] = None) -> TapType:
