@@ -603,6 +603,10 @@ class Tap(ArgumentParser):
 
         tap_class_dict_keys = Tap().__dict__.keys() | Tap.__dict__.keys()
         stored_dict = {key: stored_dict[key] for key in stored_dict.keys() - tap_class_dict_keys}
+        
+        for key, val in stored_dict.items():
+            if isinstance(val, Tap):
+                stored_dict[key] = val.as_dict()
 
         return stored_dict
 
